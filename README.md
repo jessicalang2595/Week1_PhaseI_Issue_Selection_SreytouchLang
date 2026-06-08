@@ -1,5 +1,3 @@
-# Week1_PhaseI_Issue_Selection_SreytouchLang
-
 # Contribution 1: `Add message queue support for V1 conversations during WebSocket connection`
 
 **Contribution Number:** 1  
