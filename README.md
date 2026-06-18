@@ -1,7 +1,7 @@
 # Contribution 1: `Add message queue support for V1 conversations during WebSocket connection`
 
 **Contribution Number:** 1  
-**Student:** Jessica Lang  
+**Student:** Sreytouch Lang(Jessica)
 **Issue:** [OpenHands/OpenHands#12279](https://github.com/OpenHands/OpenHands/issues/12279)  
 **Status:** Phase I Complete
 
