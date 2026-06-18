@@ -5,7 +5,7 @@
 **Issue:** [OpenHands/OpenHands#12279](https://github.com/OpenHands/OpenHands/issues/12279)  
 **Status:** Phase I Complete
 
-**Important note as of June 18, 2026:** I already commented on this issue from `jessicalang2595` on June 3, 2026 Pacific time / June 4, 2026 UTC, and the issue is still open and labeled `good first issue`, `UI/UX`, and `frontend`. However, there is also an active related PR: [OpenHands/OpenHands#14692](https://github.com/OpenHands/OpenHands/pull/14692). That made this a riskier Phase I selection than a completely uncontested issue, so I want that tradeoff documented clearly.
+**Important note as of June 7, 2026:** I already commented on this issue from `jessicalang2595` on June 3, 2026 Pacific time / June 4, 2026 UTC, and the issue is still open and labeled `good first issue`, `UI/UX`, and `frontend`. However, there is also an active related PR: [OpenHands/OpenHands#14692](https://github.com/OpenHands/OpenHands/pull/14692). That made this a riskier Phase I selection than a completely uncontested issue, so I want that tradeoff documented clearly.
 
 **Phase I checklist completed:** commented on the GitHub issue, updated the course issue sheet, forked `OpenHands/OpenHands`, and completed the Phase I README requirements.
 
