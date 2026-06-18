@@ -5,9 +5,17 @@
 **Issue:** [OpenHands/OpenHands#12279](https://github.com/OpenHands/OpenHands/issues/12279)  
 **Status:** Phase I Complete
 
-**Important note:** I already commented on this issue from `jessicalang2595` on June 3, 2026 Pacific time / June 4, 2026 UTC, but there is also an active open PR related to it: [OpenHands/OpenHands#14692](https://github.com/OpenHands/OpenHands/pull/14692). Before treating this issue as fully locked in, I need maintainer confirmation that additional help or an alternative approach is still welcome.
+**Important note as of June 18, 2026:** I already commented on this issue from `jessicalang2595` on June 3, 2026 Pacific time / June 4, 2026 UTC, and the issue is still open and labeled `good first issue`, `UI/UX`, and `frontend`. However, there is also an active related PR: [OpenHands/OpenHands#14692](https://github.com/OpenHands/OpenHands/pull/14692). That made this a riskier Phase I selection than a completely uncontested issue, so I want that tradeoff documented clearly.
 
 **Phase I checklist completed:** commented on the GitHub issue, updated the course issue sheet, forked `OpenHands/OpenHands`, and completed the Phase I README requirements.
+
+## Submission Evidence
+
+- **Selected issue:** [OpenHands/OpenHands#12279](https://github.com/OpenHands/OpenHands/issues/12279)
+- **My issue comment:** [jessicalang2595 comment on #12279](https://github.com/OpenHands/OpenHands/issues/12279#issuecomment-4618034397)
+- **My fork:** [jessicalang2595/OpenHands](https://github.com/jessicalang2595/OpenHands)
+- **Week 1 submission repo:** [jessicalang2595/Week1_PhaseI_Issue_Selection_SreytouchLang](https://github.com/jessicalang2595/Week1_PhaseI_Issue_Selection_SreytouchLang)
+- **Course issue sheet update:** completed in the private course tracker used for AI301 submissions
 
 ---
 
@@ -73,8 +81,8 @@ OpenHands' contributing guide indicates the local setup will require:
 
 ### Reproduction Evidence
 
-- **Commit showing reproduction:** To be added in Phase II after I fork the project and reproduce the behavior locally.
-- **Screenshots/logs:** To be added in Phase II if the UI or WebSocket logs clearly show the timing problem.
+- **Commit showing reproduction:** Not required in Phase I. This would be added in Phase II after local reproduction work begins.
+- **Screenshots/logs:** Not required in Phase I. These would be added in Phase II if the UI or WebSocket logs clearly show the timing problem.
 - **My findings:** The issue body points to V1 conversation WebSocket handling as the main gap, and the open PR suggests one concrete fix path: explicitly flushing pending messages in the WebSocket `onOpen` handler.
 
 ---
@@ -122,7 +130,7 @@ The V1 implementation appears to live in:
 5. Add tests in `frontend/__tests__/conversation-websocket-handler.test.tsx` for queueing, ordered delivery, reconnect behavior, and queue clearing.
 
 **Implement:**  
-Branch and commit links will be added in Phase II if I continue on this issue after maintainer confirmation.
+Branch and commit links would be added in Phase II only if this issue remained a valid target after maintainer confirmation.
 
 **Review:**  
 - Does the fix preserve message order?
@@ -169,6 +177,16 @@ Because of that open PR, this issue is useful for learning and README planning, 
 
 I completed the Phase I contributor tasks by posting on the issue, tracking the selection in the course sheet, preparing my fork, and finishing this README with the issue summary and contribution rationale.
 
+### Selection Risk Assessment
+
+The strongest weakness in this Phase I submission is not missing work, but issue-selection risk:
+
+1. the issue already had visible contributor activity
+2. there was already an active related PR during my Week 1 planning
+3. that made it a weaker Phase I target than a cleaner unclaimed issue
+
+I am keeping that risk documented here because it is an important part of honestly evaluating the quality of my issue choice.
+
 ### Week 2 Progress
 
 Planned for Phase II after maintainer confirmation or after selecting a backup issue in OpenHands.
@@ -191,6 +209,7 @@ Planned draft: improve V1 conversation reliability by queueing messages sent bef
 **Maintainer Feedback:**
 - No direct maintainer feedback to my comment yet.
 - Existing related PR from another contributor: [OpenHands/OpenHands#14692](https://github.com/OpenHands/OpenHands/pull/14692)
+- My public interest comment is here: [issue comment link](https://github.com/OpenHands/OpenHands/issues/12279#issuecomment-4618034397)
 
 **Status:** Phase I complete, awaiting next implementation step
 
