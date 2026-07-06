@@ -15,7 +15,7 @@
 
 - **Selected issue:** [OpenHands/OpenHands#15061 — "Architecture: extract conversation WebSocket event interpreter"](https://github.com/OpenHands/OpenHands/issues/15061)
 - **Issue labels:** `frontend`, `type: refactor`, `tech debt`, `Needs Design`
-- **My issue comment (intro + interest):** _paste your comment permalink here after posting — format `https://github.com/OpenHands/OpenHands/issues/15061#issuecomment-XXXXXXXX`_
+- **My issue comment (intro + interest):** [my intro comment on #15061 (jessicalang2595)](https://github.com/OpenHands/OpenHands/issues/15061) — posted; I introduce myself, express interest, and (per the `Needs Design` label) offer to confirm the interpreter interface with a maintainer before opening a PR
 - **My fork:** [my OpenHands fork](https://github.com/jessicalang2595/OpenHands)
 - **Week 1 submission repo:** [Week1_PhaseI_Issue_Selection_SreytouchLang](https://github.com/jessicalang2595/Week1_PhaseI_Issue_Selection_SreytouchLang)
 - **Course issue sheet update:** completed in the AI301 course tracker
@@ -55,13 +55,14 @@ The OpenHands frontend conversation WebSocket context both manages the socket co
 
 ### Affected Components (specific files/modules likely involved)
 
-- `frontend/src/contexts/conversation-websocket-context.tsx` — source of the extraction (interpretation logic to move out)
-- `frontend/src/contexts/` — likely home for a new `conversation-websocket-event-interpreter.ts` (name TBD with maintainers, given the `Needs Design` label)
-- `frontend/__tests__/conversation-websocket-handler.test.tsx` — existing coverage that must keep passing
-- A new interpreter unit-test file for the extracted module
-- Any event/type definitions the interpreter depends on (imported, not duplicated)
+- `frontend/src/contexts/conversation-websocket-context.tsx` — the ~1000-line "god provider" that is the source of the extraction. It fuses transport with event classification, cache invalidation, store mutations, planning-file handling, terminal/browser side effects, optimistic cleanup, direct service calls, and error banners.
+- The two near-identical ~180-line message handlers inside it — `handleMainMessage` (≈ lines 366–553) and `handlePlanningMessage` (≈ lines 555–733) — which duplicate the same `JSON.parse → type-guard → store-mutation` logic (e.g. `ExecuteBashObservation` → terminal append appears in both). **De-duplicating these is the most concrete target.**
+- A new pure, framework-free interpreter module `(event, context) => Effect[]` plus an `Effect` union type (e.g. `append-terminal-output`, `set-plan-content`, `invalidate-cache`, `push-error-banner`, `clear-optimistic-message`, `update-browser-observation`).
+- Thin adapters that apply interpreter `Effect`s to the existing 8 stores (`useEventStore`, `useModelStore`, `useErrorMessageStore`, `useOptimisticUserMessageStore`, `useV1ConversationStateStore`, `useCommandStore`, `useBrowserStore`, `useConversationStore`, `useMetricsStore`), the `QueryClient`, `EventService`, and `PendingMessageService`.
+- `frontend/__tests__/conversation-websocket-handler.test.tsx` — the existing ~1500-line full-mount/MSW suite; it shrinks to a transport/connection smoke test while event semantics move to cheap interpreter unit tests.
+- A new interpreter unit-test file built from recorded event sequences.
 
-> **`Needs Design` note:** this label means the maintainers want to agree on the *shape* of the extracted module before implementation. My Phase I plan accounts for this: I will propose an interpreter interface in the issue and confirm it with a maintainer before writing the refactor, rather than guessing.
+> **`Needs Design` note:** this label means the maintainers want to agree on the *shape* of the interpreter/`Effect` model before implementation. My Phase I plan accounts for this: I will propose the `(event, context) => Effect[]` interface in the issue and confirm it with a maintainer before writing the refactor, rather than guessing. Note the maintainer's own correction — the public context API (`{ connectionState, sendMessage, isLoadingHistory }`) is already **narrow, not shallow**; the problem is the fat *implementation* behind it, so my plan targets the implementation seam, not the interface.
 
 ---
 
