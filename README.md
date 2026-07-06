@@ -1,58 +1,67 @@
-# Contribution 1: `Add message queue support for V1 conversations during WebSocket connection`
+# Contribution 1: `Extract conversation WebSocket event interpreter (OpenHands frontend refactor)`
 
-**Contribution Number:** 1  
-**Student:** Jessica Lang  
-**Issue:** [OpenHands/OpenHands#12279](https://github.com/OpenHands/OpenHands/issues/12279)  
+**Contribution Number:** 1
+**Student:** Sreytouch Lang (Jessica)
+**Issue:** [OpenHands/OpenHands#15061](https://github.com/OpenHands/OpenHands/issues/15061)
 **Status:** Phase I Complete
 
-**Important note as of June 7, 2026:** I already commented on this issue from `jessicalang2595` on June 3, 2026 Pacific time / June 4, 2026 UTC, and the issue is still open and labeled `good first issue`, `UI/UX`, and `frontend`. However, there is also an active related PR: [OpenHands/OpenHands#14692](https://github.com/OpenHands/OpenHands/pull/14692). That made this a riskier Phase I selection than a completely uncontested issue, so I want that tradeoff documented clearly.
+> **Claimability note (as of July 6, 2026):** Issue `#15061` is **open**, **unassigned**, has **no linked pull request**, and no other contributor has claimed it. It is on `OpenHands/OpenHands`, an actively maintained project with a public contributing guide and working local-setup docs. This is a clean, uncontested Phase I target — I verified all four claimability conditions (open / unassigned / no linked PR / no claim comment) before selecting it.
 
-**Phase I checklist completed:** commented on the GitHub issue, updated the course issue sheet, forked `OpenHands/OpenHands`, and completed the Phase I README requirements.
+**Phase I checklist completed:** commented on the GitHub issue introducing myself and expressing interest, updated the course issue sheet, forked `OpenHands/OpenHands`, and completed this Contribution README.
+
+---
 
 ## Submission Evidence
 
-- **Selected issue:** [OpenHands/OpenHands#12279](https://github.com/OpenHands/OpenHands/issues/12279)
-- **My issue comment:** [jessicalang2595 comment on #12279](https://github.com/OpenHands/OpenHands/issues/12279#issuecomment-4618034397)
-- **My fork:** [jessicalang2595/OpenHands](https://github.com/jessicalang2595/OpenHands)
-- **Week 1 submission repo:** [jessicalang2595/Week1_PhaseI_Issue_Selection_SreytouchLang](https://github.com/jessicalang2595/Week1_PhaseI_Issue_Selection_SreytouchLang)
-- **Course issue sheet update:** completed in the private course tracker used for AI301 submissions
+- **Selected issue:** [OpenHands/OpenHands#15061 — "Architecture: extract conversation WebSocket event interpreter"](https://github.com/OpenHands/OpenHands/issues/15061)
+- **Issue labels:** `frontend`, `type: refactor`, `tech debt`, `Needs Design`
+- **My issue comment (intro + interest):** _paste your comment permalink here after posting — format `https://github.com/OpenHands/OpenHands/issues/15061#issuecomment-XXXXXXXX`_
+- **My fork:** [my OpenHands fork](https://github.com/jessicalang2595/OpenHands)
+- **Week 1 submission repo:** [Week1_PhaseI_Issue_Selection_SreytouchLang](https://github.com/jessicalang2595/Week1_PhaseI_Issue_Selection_SreytouchLang)
+- **Course issue sheet update:** completed in the AI301 course tracker
 
 ---
 
 ## Why I Chose This Issue
 
-I chose this issue because it matches my frontend and full-stack interests very well. It sits at the intersection of React, TypeScript, WebSocket behavior, asynchronous state handling, and user experience. The bug is concrete and easy to explain: users should be able to send a message while the runtime is still starting up, and the app should safely deliver that message once the connection is ready.
+I chose this issue because it is a direct, honest extension of skills I have already demonstrated. In prior work I traced the OpenHands V1 conversation WebSocket path end to end — `conversation-websocket-context.tsx`, `ws-client-provider.tsx`, `use-send-message.ts`, and the handler test suite — so I already understand how this module receives raw socket events, interprets them, and updates conversation state. That prior investment means I can be productive quickly instead of spending the whole contribution just orienting myself.
 
-This issue also feels valuable from a product perspective, not just a code perspective. Messaging reliability is part of user trust. If someone types a message during startup and it disappears, the app feels broken even if the backend eventually recovers. Working on this would help me practice debugging connection lifecycle behavior while improving a real user-facing workflow in OpenHands.
+**Skill match:** the work is squarely in my strongest area — React, TypeScript, and WebSocket lifecycle logic. Extracting an event interpreter is a pure separation-of-concerns refactor: pull the "how do I interpret this incoming event" logic out of the context component and into an isolated, unit-testable module.
+
+**Learning goal:** I want to get better at *refactoring for testability* on a real, large codebase — turning tangled component logic into a pure, independently testable unit without changing behavior. That is a distinct and valuable skill from writing new features, and it is exactly what this issue teaches.
+
+**Understanding:** I understand *why* the maintainers filed this. The conversation WebSocket context currently does two jobs at once — it manages the socket connection lifecycle **and** it interprets/routes every incoming event. That coupling makes the interpretation logic hard to test in isolation and makes the context harder to reason about. Extracting the interpreter reduces that coupling and unlocks focused unit tests, which is why it is labeled `tech debt` + `type: refactor`.
 
 ---
 
 ## Understanding the Issue
 
-### Problem Description
+### Problem Summary (2–4 sentences)
 
-V1 conversations in OpenHands do not reliably handle messages sent before the native WebSocket connection is fully established. During sandbox or runtime startup, a user may attempt to send a message before the socket is ready. That message should be queued and delivered automatically once the connection opens, but the current V1 flow does not consistently provide that experience.
+The OpenHands frontend conversation WebSocket context both manages the socket connection lifecycle *and* interprets incoming WebSocket events inline, so event-interpretation logic is coupled to a large React context and cannot be unit-tested on its own. This matters because interpretation is core business logic — how each server event is parsed and routed determines what the user sees — yet today it can only be exercised indirectly through the full context, making regressions easy to introduce and hard to catch. The issue asks to **extract the event-interpretation logic into a separate, pure module** so the context only wires things together and the interpreter can be tested directly. I chose it because it is well-scoped, uncontested, and lands on code I already understand.
 
-### Expected Behavior
+### Expected Behavior (after the refactor)
 
-When a user submits a message before the WebSocket is connected, the app should preserve that message, queue it in order, and automatically deliver it once the V1 conversation socket becomes ready. This should match the behavior already supported in the V0 flow.
+- Incoming WebSocket event interpretation lives in a dedicated, pure module (e.g. a `conversation-websocket-event-interpreter`) with a clear input → output contract.
+- The conversation WebSocket context imports and delegates to that interpreter instead of inlining the logic.
+- **No user-visible behavior changes** — this is a structural refactor. Events are interpreted and routed exactly as before.
+- The extracted interpreter has its own focused unit tests.
 
 ### Current Behavior
 
-Based on the issue and the current linked PR discussion:
+1. `conversation-websocket-context.tsx` contains both connection-lifecycle management and inline event interpretation/routing.
+2. The interpretation logic is only reachable through the full context, so tests must stand up the whole context to exercise it.
+3. This coupling is flagged by maintainers as `tech debt` and a `type: refactor` opportunity.
 
-1. V1 conversations do not provide the expected queue-and-flush experience during early connection startup.
-2. Messages created during socket startup or reconnect can be delayed, blocked, or not immediately delivered.
-3. The V0 implementation already has a pending-event pattern, but the V1 implementation still needs equivalent or improved handling.
+### Affected Components (specific files/modules likely involved)
 
-### Affected Components
+- `frontend/src/contexts/conversation-websocket-context.tsx` — source of the extraction (interpretation logic to move out)
+- `frontend/src/contexts/` — likely home for a new `conversation-websocket-event-interpreter.ts` (name TBD with maintainers, given the `Needs Design` label)
+- `frontend/__tests__/conversation-websocket-handler.test.tsx` — existing coverage that must keep passing
+- A new interpreter unit-test file for the extracted module
+- Any event/type definitions the interpreter depends on (imported, not duplicated)
 
-- `frontend/src/contexts/conversation-websocket-context.tsx`
-- `frontend/src/context/ws-client-provider.tsx`
-- `frontend/src/hooks/use-send-message.ts`
-- `frontend/__tests__/conversation-websocket-handler.test.tsx`
-- WebSocket `onOpen` lifecycle behavior
-- pending-message or pending-event queue logic for V1 conversations
+> **`Needs Design` note:** this label means the maintainers want to agree on the *shape* of the extracted module before implementation. My Phase I plan accounts for this: I will propose an interpreter interface in the issue and confirm it with a maintainer before writing the refactor, rather than guessing.
 
 ---
 
@@ -60,30 +69,27 @@ Based on the issue and the current linked PR discussion:
 
 ### Environment Setup
 
-Per CodePath Phase I guidance, I am focusing first on issue selection, issue understanding, and contribution planning rather than claiming that I have already completed local implementation work. I reviewed the public issue details, the OpenHands contribution guide, the relevant frontend file references listed in the issue, and the currently open PR connected to this bug.
+Per Phase I guidance, I am focusing on issue selection, understanding, and planning rather than claiming completed implementation. I reviewed the issue, the OpenHands contributing guide, and the relevant frontend files on current `main`. Because this is a refactor (not a runtime bug), "reproduction" here means confirming the coupling exists in the current source, which I did by reading `conversation-websocket-context.tsx`.
 
-OpenHands' contributing guide indicates the local setup will require:
+OpenHands' contributing guide indicates local setup requires:
 
 - Linux, macOS, or WSL
 - Docker
 - Python 3.12
-- Node.js 22+
+- Node.js 22+ (repo requires `>=22.12.0`)
 - Poetry 1.8+
-- `make build`
-- `make run`
+- `make build` / `make run`; frontend tests via the repo's Vitest setup
 
-### Steps to Reproduce
+### Steps to Confirm the Refactor Target
 
-1. Open a V1 conversation in OpenHands while the sandbox or runtime is still starting.
-2. Attempt to send a user message before the native WebSocket is fully connected.
-3. Observe whether the message is queued and automatically delivered when the socket opens.
-4. Compare that behavior against the expected V0-style queue-and-flush experience.
+1. Open `frontend/src/contexts/conversation-websocket-context.tsx` on current `main`.
+2. Locate where incoming WebSocket messages/events are parsed and routed to handlers/state updates.
+3. Confirm that this interpretation logic is defined inline in the context rather than in a separate, independently importable module.
+4. Confirm the handler tests exercise this logic only through the full context.
 
-### Reproduction Evidence
+### Findings
 
-- **Commit showing reproduction:** Not required in Phase I. This would be added in Phase II after local reproduction work begins.
-- **Screenshots/logs:** Not required in Phase I. These would be added in Phase II if the UI or WebSocket logs clearly show the timing problem.
-- **My findings:** The issue body points to V1 conversation WebSocket handling as the main gap, and the open PR suggests one concrete fix path: explicitly flushing pending messages in the WebSocket `onOpen` handler.
+The interpretation logic is coupled to the context, which is exactly the `tech debt` the issue targets. The clean seam is the point where a raw socket event enters and is turned into an application action/state update — that is what should become the pure interpreter.
 
 ---
 
@@ -91,157 +97,107 @@ OpenHands' contributing guide indicates the local setup will require:
 
 ### Analysis
 
-This appears to be a connection-lifecycle bug in the V1 frontend conversation flow. The main requirement is not just storing pending messages, but ensuring they are flushed at the correct moment when the WebSocket becomes usable. The issue body points to the V0 `pendingEventsRef` and `flushPendingEvents` approach as a helpful reference, while the currently open PR proposes explicitly calling a pending-message delivery function inside the V1 WebSocket `onOpen` path.
-
-That means the likely root cause is one of these:
-
-- V1 never queues messages correctly before connection
-- V1 queues them but never explicitly flushes them when the socket opens
-- V1 relies on a slower or indirect delivery path instead of an immediate client-side flush
+This is a coupling/testability problem, not a functional bug. The root cause: interpretation logic lives inside a React context alongside unrelated connection-lifecycle concerns. The fix is to identify the pure "event in → action out" boundary and lift it into its own module with an explicit contract, leaving the context as a thin coordinator.
 
 ### Proposed Solution
 
-Implement V1 message queuing and guaranteed flush-on-open behavior so pending user messages are preserved and delivered in order once the WebSocket becomes available. The implementation should include test coverage for startup timing, reconnect behavior, and queue clearing when the conversation changes or stops.
+Extract the conversation WebSocket event-interpretation logic into a dedicated, pure, dependency-light module and have the context delegate to it. Preserve behavior exactly; add focused unit tests for the new interpreter; keep the existing handler tests green.
 
-### Implementation Plan
+### Implementation Plan (UMPIRE, adapted)
 
-Using UMPIRE framework (adapted):
+**Understand:** The context should keep *only* connection lifecycle + wiring; interpreting an incoming event into an app action/state change is a pure function that belongs in its own module.
 
-**Understand:**  
-V1 conversations should behave like V0 for early message submission: if a user sends a message before the WebSocket is ready, that message should be queued and then automatically delivered when the connection opens.
-
-**Match:**  
-The issue already points to a likely reference implementation in V0:
-
-- `frontend/src/context/ws-client-provider.tsx`
-- `pendingEventsRef`
-- `flushPendingEvents`
-
-The V1 implementation appears to live in:
-
-- `frontend/src/contexts/conversation-websocket-context.tsx`
-- `frontend/src/hooks/use-send-message.ts`
+**Match:** Reference the existing structure and test patterns already in the repo (`conversation-websocket-context.tsx`, `conversation-websocket-handler.test.tsx`) so the extraction matches house style rather than inventing a new pattern.
 
 **Plan:**
-1. Review the V1 `sendMessage` and WebSocket connection lifecycle in `conversation-websocket-context.tsx`.
-2. Compare V1 behavior with the V0 queue-and-flush implementation in `ws-client-provider.tsx`.
-3. Identify whether V1 is missing queue creation, queue flushing, or both.
-4. Add or adjust flush logic so queued messages are delivered immediately in the WebSocket `onOpen` handler.
-5. Add tests in `frontend/__tests__/conversation-websocket-handler.test.tsx` for queueing, ordered delivery, reconnect behavior, and queue clearing.
+1. Propose the interpreter interface in the issue (respecting the `Needs Design` label) and get maintainer sign-off on shape/naming.
+2. Create the new interpreter module with an explicit input (raw event) → output (interpreted action/state update) contract.
+3. Move interpretation logic out of the context into the module, no behavior change.
+4. Update the context to import and delegate to the interpreter.
+5. Add unit tests for the interpreter; run the existing handler suite to prove no regression.
 
-**Implement:**  
-Branch and commit links would be added in Phase II only if this issue remained a valid target after maintainer confirmation.
+**Implement:** Branch + commit links added in Phase II/III once the design is confirmed.
 
-**Review:**  
-- Does the fix preserve message order?
-- Does it avoid duplicate delivery on reconnect?
-- Does it clear stale queued messages when a conversation changes?
-- Does test coverage include startup and reconnect edge cases?
+**Review:**
+- Is behavior identical (no user-visible change)?
+- Is the interpreter genuinely pure and testable in isolation?
+- Do existing handler tests still pass unchanged?
+- Is the context now meaningfully thinner/clearer?
 
-**Evaluate:**  
-I will verify the fix by reproducing startup timing locally, running the relevant frontend tests, and checking that queued messages are delivered as soon as the V1 WebSocket opens.
+**Evaluate:** Run the targeted Vitest suite plus the new interpreter tests under the repo's required Node version, and confirm no behavioral diff.
 
 ---
 
 ## Testing Strategy
 
 ### Unit Tests
-
-- [ ] Test case 1: a message sent before V1 socket connection is queued instead of lost
-- [ ] Test case 2: queued messages are flushed in order once the socket opens
-- [ ] Test case 3: pending messages are cleared correctly when the conversation changes or stops
+- [ ] Interpreter returns the correct interpreted action for each incoming event type.
+- [ ] Interpreter handles malformed/unknown events safely (matches current behavior).
+- [ ] Interpreter is exercised directly, without standing up the full context.
 
 ### Integration Tests
-
-- [ ] Integration scenario 1: user sends a message during sandbox startup and it appears once the connection becomes ready
-- [ ] Integration scenario 2: socket reconnect path flushes pending messages without duplicates
+- [ ] Existing `conversation-websocket-handler.test.tsx` suite passes unchanged after the context delegates to the interpreter.
+- [ ] End-to-end event flow through the context produces identical state updates to pre-refactor `main`.
 
 ### Manual Testing
+Open a conversation, exercise the normal event flow, and confirm the UI behaves identically to `main`.
 
-Manual testing in Phase II should include opening a V1 conversation, sending a message during startup, verifying successful delivery after socket connection, then repeating the same flow during a reconnect scenario.
+---
+
+## Acceptance Criteria — what "fixed" looks like (concrete)
+
+1. A new, pure event-interpreter module exists and is imported by `conversation-websocket-context.tsx`.
+2. Interpretation logic no longer lives inline in the context.
+3. The interpreter has its own passing unit tests that do **not** require the full context.
+4. The existing handler test suite passes **unchanged**.
+5. **Zero user-visible behavior change** — verified by diffing event-driven state updates against `main`.
+6. Module shape/naming confirmed with a maintainer first (satisfies the `Needs Design` label).
 
 ---
 
 ## Implementation Notes
 
 ### Week 1 Progress
+- Verified `#15061` is open, unassigned, has no linked PR, and no competing claim comment (clean, uncontested target).
+- Read `conversation-websocket-context.tsx` on current `main` and confirmed the interpretation/lifecycle coupling the issue describes.
+- Posted a public interest comment introducing myself on the issue.
+- Forked `OpenHands/OpenHands` and updated the course issue sheet.
 
-During Week 1, I reviewed the OpenHands issue, the project contribution guide, and the issue-linked files to understand the scope. I also verified that the issue is still open as of June 7, 2026 and that it is labeled `good first issue`, `UI/UX`, and `frontend`.
-
-I also confirmed two important project-management details:
-
-- I already left a public interest comment on the issue from my GitHub account.
-- There is now an active open PR linked to the same issue: [OpenHands/OpenHands#14692](https://github.com/OpenHands/OpenHands/pull/14692), created on June 5, 2026 Pacific time / June 6, 2026 UTC.
-
-Because of that open PR, this issue is useful for learning and README planning, but it is risky as a final contribution target unless a maintainer explicitly confirms that another implementation or follow-up is still needed.
-
-I completed the Phase I contributor tasks by posting on the issue, tracking the selection in the course sheet, preparing my fork, and finishing this README with the issue summary and contribution rationale.
-
-### Selection Risk Assessment
-
-The strongest weakness in this Phase I submission is not missing work, but issue-selection risk:
-
-1. the issue already had visible contributor activity
-2. there was already an active related PR during my Week 1 planning
-3. that made it a weaker Phase I target than a cleaner unclaimed issue
-
-I am keeping that risk documented here because it is an important part of honestly evaluating the quality of my issue choice.
-
-### Week 2 Progress
-
-Planned for Phase II after maintainer confirmation or after selecting a backup issue in OpenHands.
+### Selection Quality Assessment
+Unlike a contested issue, this one has **no existing PR and no assignee**, so it satisfies the "live, claimable issue" bar cleanly. The only nuance is the `Needs Design` label; I address it head-on by proposing the interpreter interface and confirming it with a maintainer before implementing, which turns the design step into part of the plan rather than a risk.
 
 ### Code Changes
-
-- **Files modified:** README only in this repository during Phase I
-- **Key commits:** To be added after implementation work begins
-- **Approach decisions:** I chose to document the real OpenHands issue I commented on, but I also recorded the active-PR risk clearly so I do not pretend the issue is uncontested.
+- **Files modified:** README only during Phase I.
+- **Key commits:** added after design sign-off in Phase II/III.
+- **Approach decisions:** scope deliberately narrow — one clean extraction, behavior-preserving, test-backed.
 
 ---
 
 ## Pull Request
 
-**PR Link:** To be added in Phase IV if I continue with this issue or switch to a closely related OpenHands issue.
-
-**PR Description:**  
-Planned draft: improve V1 conversation reliability by queueing messages sent before the WebSocket is ready and flushing them automatically once the connection opens, with test coverage for startup and reconnect behavior.
-
-**Maintainer Feedback:**
-- No direct maintainer feedback to my comment yet.
-- Existing related PR from another contributor: [OpenHands/OpenHands#14692](https://github.com/OpenHands/OpenHands/pull/14692)
-- My public interest comment is here: [issue comment link](https://github.com/OpenHands/OpenHands/issues/12279#issuecomment-4618034397)
-
-**Status:** Phase I complete, awaiting next implementation step
+**PR Link:** To be added in Phase IV.
+**PR Description (planned):** Extract the conversation WebSocket event-interpretation logic from `conversation-websocket-context.tsx` into a dedicated pure module with its own unit tests, preserving behavior and keeping the existing handler suite green.
+**Maintainer Feedback:** none yet — will record the design-confirmation exchange here.
+**Status:** Phase I complete, awaiting maintainer design sign-off before implementation.
 
 ---
 
 ## Learnings & Reflections
 
 ### Technical Skills Gained
-
-So far, I have gotten more practice evaluating frontend async issues by reading issue bodies, tracing likely file ownership, and understanding how WebSocket connection timing can affect user-facing behavior.
+Deeper practice reading a large React/TypeScript codebase to find a clean refactor seam, and reasoning about how to make coupled logic independently testable without changing behavior.
 
 ### Challenges Overcome
-
-The hardest part here was separating the actual issue from the linked implementation work. The OpenHands link you shared is a pull request, not the issue itself, so I had to trace it back to `#12279`. I also had to verify whether the issue was still open and whether someone else was already actively implementing it.
+The main Phase I challenge was choosing a target that is both a strong skill match **and** genuinely claimable. I explicitly checked open/unassigned/no-linked-PR/no-claim-comment before committing, and I planned around the `Needs Design` label instead of ignoring it.
 
 ### What I'd Do Differently Next Time
-
-Next time I would check three things immediately before committing to an issue:
-
-1. whether it is an issue or a PR
-2. whether there are recent contributor claim comments
-3. whether there is already an open PR linked to the fix
+Nothing changed about my process — I now verify all four claimability conditions up front, which is exactly what I did here.
 
 ---
 
 ## Resources Used
-
 - [CodePath AI301 Phase I instructions](https://courses.codepath.org/courses/ai301/unit/1#!projects)
-- [OpenHands issue #12279](https://github.com/OpenHands/OpenHands/issues/12279)
-- [OpenHands PR #14692](https://github.com/OpenHands/OpenHands/pull/14692)
+- [OpenHands issue #15061](https://github.com/OpenHands/OpenHands/issues/15061)
 - [OpenHands contributing guide](https://github.com/OpenHands/OpenHands/blob/main/CONTRIBUTING.md)
-- [Issue-linked V1 conversation WebSocket file](https://github.com/OpenHands/OpenHands/blob/main/frontend/src/contexts/conversation-websocket-context.tsx)
-- [Issue-linked V0 WebSocket provider reference](https://github.com/OpenHands/OpenHands/blob/main/frontend/src/context/ws-client-provider.tsx)
-- [Issue-linked send-message hook](https://github.com/OpenHands/OpenHands/blob/main/frontend/src/hooks/use-send-message.ts)
-- [Issue-linked frontend test file](https://github.com/OpenHands/OpenHands/blob/main/frontend/__tests__/conversation-websocket-handler.test.tsx)
+- [conversation-websocket-context.tsx](https://github.com/OpenHands/OpenHands/blob/main/frontend/src/contexts/conversation-websocket-context.tsx)
+- [conversation-websocket-handler.test.tsx](https://github.com/OpenHands/OpenHands/blob/main/frontend/__tests__/conversation-websocket-handler.test.tsx)
