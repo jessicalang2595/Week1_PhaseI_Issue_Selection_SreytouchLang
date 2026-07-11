@@ -1,22 +1,22 @@
-# Contribution 1: `Extract conversation WebSocket event interpreter (OpenHands frontend refactor)`
+# Contribution 1: `Extract settings access policy (OpenHands frontend refactor)`
 
 **Contribution Number:** 1
 **Student:** Sreytouch Lang (Jessica)
-**Issue:** [OpenHands/OpenHands#15061](https://github.com/OpenHands/OpenHands/issues/15061)
+**Issue:** [OpenHands/OpenHands#15064](https://github.com/OpenHands/OpenHands/issues/15064)
 **Status:** Phase I Complete
 
-> **Claimability note (as of July 6, 2026):** Issue `#15061` is **open**, **unassigned**, has **no linked pull request**, and no other contributor has claimed it. It is on `OpenHands/OpenHands`, an actively maintained project with a public contributing guide and working local-setup docs. This is a clean, uncontested Phase I target — I verified all four claimability conditions (open / unassigned / no linked PR / no claim comment) before selecting it.
+> **Claimability note (as of July 10, 2026):** Issue `#15064` is **open**, **unassigned**, and shows **no linked pull request** in the issue's Development section. The thread contains architecture discussion from the issue author, but no competing contributor claim comment, which makes it a clean Phase I target.
 
-**Phase I checklist completed:** commented on the GitHub issue introducing myself and expressing interest, updated the course issue sheet, forked `OpenHands/OpenHands`, and completed this Contribution README.
+**Phase I checklist completed:** prepared and posted an introduction comment on the GitHub issue, verified the issue is live and claimable, confirmed the project is actively maintained with usable setup docs, verified my public fork exists under my GitHub account, and completed this Contribution README.
 
 ---
 
 ## Submission Evidence
 
-- **Selected issue:** [OpenHands/OpenHands#15061 — "Architecture: extract conversation WebSocket event interpreter"](https://github.com/OpenHands/OpenHands/issues/15061)
-- **Issue labels:** `frontend`, `type: refactor`, `tech debt`, `Needs Design`
-- **My issue comment (intro + interest):** [my intro comment on #15061 (jessicalang2595)](https://github.com/OpenHands/OpenHands/issues/15061) — posted; I introduce myself, express interest, and (per the `Needs Design` label) offer to confirm the interpreter interface with a maintainer before opening a PR
-- **My fork:** [my OpenHands fork](https://github.com/jessicalang2595/OpenHands)
+- **Selected issue:** [OpenHands/OpenHands#15064 — "Architecture: extract settings access policy"](https://github.com/OpenHands/OpenHands/issues/15064)
+- **Issue labels:** `settings`, `frontend`, `tech debt`, `type: refactor`, `Needs Design`
+- **My issue comment (intro + interest):** [my intro comment on #15064 (jessicalang2595)](https://github.com/OpenHands/OpenHands/issues/15064#issuecomment-4942570892)
+- **My fork:** [jessicalang2595/OpenHands](https://github.com/jessicalang2595/OpenHands)
 - **Week 1 submission repo:** [Week1_PhaseI_Issue_Selection_SreytouchLang](https://github.com/jessicalang2595/Week1_PhaseI_Issue_Selection_SreytouchLang)
 - **Course issue sheet update:** completed in the AI301 course tracker
 
@@ -24,13 +24,13 @@
 
 ## Why I Chose This Issue
 
-I chose this issue because it is a direct, honest extension of skills I have already demonstrated. In prior work I traced the OpenHands V1 conversation WebSocket path end to end — `conversation-websocket-context.tsx`, `ws-client-provider.tsx`, `use-send-message.ts`, and the handler test suite — so I already understand how this module receives raw socket events, interprets them, and updates conversation state. That prior investment means I can be productive quickly instead of spending the whole contribution just orienting myself.
+I chose this issue because it is a strong match for the kind of frontend work I do best: React, TypeScript, route logic, and refactoring large UI control flows into smaller testable modules. The core task is not inventing a brand-new feature, but restructuring an existing decision path into a pure policy module, which fits the kind of architecture and cleanup work I enjoy.
 
-**Skill match:** the work is squarely in my strongest area — React, TypeScript, and WebSocket lifecycle logic. Extracting an event interpreter is a pure separation-of-concerns refactor: pull the "how do I interpret this incoming event" logic out of the context component and into an isolated, unit-testable module.
+**Skill match:** this issue lives in frontend route access logic and redirect behavior, which means working with React Router, TypeScript control flow, and policy-style decision logic. Those are areas where I am comfortable reading existing code, tracing edge cases, and making behavior-preserving refactors.
 
-**Learning goal:** I want to get better at *refactoring for testability* on a real, large codebase — turning tangled component logic into a pure, independently testable unit without changing behavior. That is a distinct and valuable skill from writing new features, and it is exactly what this issue teaches.
+**Learning goal:** I want to get better at extracting business rules from framework-heavy code into pure, unit-testable functions. That is a different skill from just adding UI features, and it is valuable because it makes future bug fixing and maintenance easier.
 
-**Understanding:** I understand *why* the maintainers filed this. The conversation WebSocket context currently does two jobs at once — it manages the socket connection lifecycle **and** it interprets/routes every incoming event. That coupling makes the interpretation logic hard to test in isolation and makes the context harder to reason about. Extracting the interpreter reduces that coupling and unlocks focused unit tests, which is why it is labeled `tech debt` + `type: refactor`.
+**Understanding:** I understand why this issue matters. If settings access rules are scattered through a procedural route loader, it becomes harder to reason about redirect behavior, harder to test role-based access decisions, and easier to break settings navigation when flags, organizations, or billing visibility rules change.
 
 ---
 
@@ -38,31 +38,31 @@ I chose this issue because it is a direct, honest extension of skills I have alr
 
 ### Problem Summary (2–4 sentences)
 
-The OpenHands frontend conversation WebSocket context both manages the socket connection lifecycle *and* interprets incoming WebSocket events inline, so event-interpretation logic is coupled to a large React context and cannot be unit-tested on its own. This matters because interpretation is core business logic — how each server event is parsed and routed determines what the user sees — yet today it can only be exercised indirectly through the full context, making regressions easy to introduce and hard to catch. The issue asks to **extract the event-interpretation logic into a separate, pure module** so the context only wires things together and the interpreter can be tested directly. I chose it because it is well-scoped, uncontested, and lands on code I already understand.
+The OpenHands settings route currently mixes framework wiring with business-policy decisions in one loader. It decides who can access which settings page, when a user should be redirected, and how feature flags, organization state, ACP mode, and billing visibility affect navigation, all inside procedural route logic. That matters because redirect and permission rules are core product behavior, and when those rules are coupled to query-cache reads and route-loader code, they become much harder to test cleanly. I chose this issue because it is a well-scoped frontend refactor with clear user impact and strong testability value.
 
 ### Expected Behavior (after the refactor)
 
-- Incoming WebSocket event interpretation lives in a dedicated, pure module (e.g. a `conversation-websocket-event-interpreter`) with a clear input → output contract.
-- The conversation WebSocket context imports and delegates to that interpreter instead of inlining the logic.
-- **No user-visible behavior changes** — this is a structural refactor. Events are interpreted and routed exactly as before.
-- The extracted interpreter has its own focused unit tests.
+- Settings access rules should live in a pure policy function such as `decideSettingsAccess(facts)`.
+- The route edge should gather facts like config, pathname, selected organization, user role, and settings data, then pass them into the policy.
+- The policy should return a clear result like render vs redirect, rather than performing routing decisions inline.
+- The redirect matrix should be unit-testable without needing the full route loader, query cache, or store setup.
 
 ### Current Behavior
 
-1. `conversation-websocket-context.tsx` contains both connection-lifecycle management and inline event interpretation/routing.
-2. The interpretation logic is only reachable through the full context, so tests must stand up the whole context to exercise it.
-3. This coupling is flagged by maintainers as `tech debt` and a `type: refactor` opportunity.
+1. `frontend/src/routes/settings.tsx` owns route-level access and redirect logic directly inside the loader.
+2. The loader mixes SaaS-only path guards, feature-flag hiding, ACP gating, selected-organization lookup, billing visibility checks, admin permission logic, and redirect selection.
+3. Some helper functions already exist, but the orchestration and final decision-making still live in one procedural flow.
+4. The loader also reads query-cache and organization state directly, which couples business rules to framework and data-loading details.
 
 ### Affected Components (specific files/modules likely involved)
 
-- `frontend/src/contexts/conversation-websocket-context.tsx` — the ~1000-line "god provider" that is the source of the extraction. It fuses transport with event classification, cache invalidation, store mutations, planning-file handling, terminal/browser side effects, optimistic cleanup, direct service calls, and error banners.
-- The two near-identical ~180-line message handlers inside it — `handleMainMessage` (≈ lines 366–553) and `handlePlanningMessage` (≈ lines 555–733) — which duplicate the same `JSON.parse → type-guard → store-mutation` logic (e.g. `ExecuteBashObservation` → terminal append appears in both). **De-duplicating these is the most concrete target.**
-- A new pure, framework-free interpreter module `(event, context) => Effect[]` plus an `Effect` union type (e.g. `append-terminal-output`, `set-plan-content`, `invalidate-cache`, `push-error-banner`, `clear-optimistic-message`, `update-browser-observation`).
-- Thin adapters that apply interpreter `Effect`s to the existing 8 stores (`useEventStore`, `useModelStore`, `useErrorMessageStore`, `useOptimisticUserMessageStore`, `useV1ConversationStateStore`, `useCommandStore`, `useBrowserStore`, `useConversationStore`, `useMetricsStore`), the `QueryClient`, `EventService`, and `PendingMessageService`.
-- `frontend/__tests__/conversation-websocket-handler.test.tsx` — the existing ~1500-line full-mount/MSW suite; it shrinks to a transport/connection smoke test while event semantics move to cheap interpreter unit tests.
-- A new interpreter unit-test file built from recorded event sequences.
+- `frontend/src/routes/settings.tsx`
+- `frontend/src/utils/settings-utils.ts`
+- `frontend/src/hooks/use-settings-nav-items.ts`
+- `frontend/src/utils/org/permission-checks.ts`
+- `frontend/src/utils/org/billing-visibility.ts`
 
-> **`Needs Design` note:** this label means the maintainers want to agree on the *shape* of the interpreter/`Effect` model before implementation. My Phase I plan accounts for this: I will propose the `(event, context) => Effect[]` interface in the issue and confirm it with a maintainer before writing the refactor, rather than guessing. Note the maintainer's own correction — the public context API (`{ connectionState, sendMessage, isLoadingHistory }`) is already **narrow, not shallow**; the problem is the fat *implementation* behind it, so my plan targets the implementation seam, not the interface.
+> **`Needs Design` note:** because this issue is labeled `Needs Design`, I plan to confirm the shape of the extracted policy with maintainers before implementation. My default direction is a pure decision function that receives plain facts and returns a render-or-redirect result, while keeping query-cache reads and route params at the loader edge.
 
 ---
 
@@ -70,27 +70,26 @@ The OpenHands frontend conversation WebSocket context both manages the socket co
 
 ### Environment Setup
 
-Per Phase I guidance, I am focusing on issue selection, understanding, and planning rather than claiming completed implementation. I reviewed the issue, the OpenHands contributing guide, and the relevant frontend files on current `main`. Because this is a refactor (not a runtime bug), "reproduction" here means confirming the coupling exists in the current source, which I did by reading `conversation-websocket-context.tsx`.
+Per Phase I guidance, I focused on understanding and scoping the issue instead of claiming implementation work. I reviewed the issue itself, the OpenHands contributing guide, and the current frontend route files on `main`.
 
-OpenHands' contributing guide indicates local setup requires:
+OpenHands' documented setup indicates the project uses:
 
-- Linux, macOS, or WSL
 - Docker
 - Python 3.12
-- Node.js 22+ (repo requires `>=22.12.0`)
+- Node.js 22+
 - Poetry 1.8+
-- `make build` / `make run`; frontend tests via the repo's Vitest setup
+- the repository `README.md` / `CONTRIBUTING.md` workflow for local setup and test execution
 
 ### Steps to Confirm the Refactor Target
 
-1. Open `frontend/src/contexts/conversation-websocket-context.tsx` on current `main`.
-2. Locate where incoming WebSocket messages/events are parsed and routed to handlers/state updates.
-3. Confirm that this interpretation logic is defined inline in the context rather than in a separate, independently importable module.
-4. Confirm the handler tests exercise this logic only through the full context.
+1. Open `frontend/src/routes/settings.tsx` on current `main`.
+2. Trace the `clientLoader` logic and identify which access decisions it owns.
+3. Confirm whether redirect rules are expressed inline or already isolated into a pure policy function.
+4. Review related helper files to see what is already extracted and what still remains coupled to the route loader.
 
 ### Findings
 
-The interpretation logic is coupled to the context, which is exactly the `tech debt` the issue targets. The clean seam is the point where a raw socket event enters and is turned into an application action/state update — that is what should become the pure interpreter.
+The issue is real and current. The settings route already has some helper functions, but the final orchestration and redirect logic are still procedural and still tied to query-cache and selected-organization reads. That makes the issue a good candidate for a behavior-preserving extraction rather than a speculative rewrite.
 
 ---
 
@@ -98,107 +97,122 @@ The interpretation logic is coupled to the context, which is exactly the `tech d
 
 ### Analysis
 
-This is a coupling/testability problem, not a functional bug. The root cause: interpretation logic lives inside a React context alongside unrelated connection-lifecycle concerns. The fix is to identify the pure "event in → action out" boundary and lift it into its own module with an explicit contract, leaving the context as a thin coordinator.
+This is not mainly a UI bug; it is a structure and testability problem. The root issue is that access policy and redirect decisions are mixed with loader-specific framework concerns, which makes the logic harder to test and maintain than it needs to be.
 
 ### Proposed Solution
 
-Extract the conversation WebSocket event-interpretation logic into a dedicated, pure, dependency-light module and have the context delegate to it. Preserve behavior exactly; add focused unit tests for the new interpreter; keep the existing handler tests green.
+Extract the settings access and redirect logic into a pure policy module that accepts plain facts and returns a decision object. Keep framework-specific work like `queryClient.getQueryData(...)`, route params, and selected-organization store reads in a thin loader boundary.
 
 ### Implementation Plan (UMPIRE, adapted)
 
-**Understand:** The context should keep *only* connection lifecycle + wiring; interpreting an incoming event into an app action/state change is a pure function that belongs in its own module.
+**Understand:** the route should gather facts; the policy should decide behavior.
 
-**Match:** Reference the existing structure and test patterns already in the repo (`conversation-websocket-context.tsx`, `conversation-websocket-handler.test.tsx`) so the extraction matches house style rather than inventing a new pattern.
+**Match:** reuse the existing settings helpers instead of replacing them wholesale, and refactor only the coupled orchestration layer.
 
 **Plan:**
-1. Propose the interpreter interface in the issue (respecting the `Needs Design` label) and get maintainer sign-off on shape/naming.
-2. Create the new interpreter module with an explicit input (raw event) → output (interpreted action/state update) contract.
-3. Move interpretation logic out of the context into the module, no behavior change.
-4. Update the context to import and delegate to the interpreter.
-5. Add unit tests for the interpreter; run the existing handler suite to prove no regression.
+1. Confirm the desired policy shape with maintainers because the issue is labeled `Needs Design`.
+2. Identify the minimal fact object needed for access decisions.
+3. Extract a pure `decideSettingsAccess(...)` function.
+4. Update the route loader so it gathers facts and delegates to the policy.
+5. Add focused unit tests that cover redirect and permission cases without React Router loader setup.
 
-**Implement:** Branch + commit links added in Phase II/III once the design is confirmed.
+**Implement:** branch and commit details will be added in Phase II / III.
 
 **Review:**
-- Is behavior identical (no user-visible change)?
-- Is the interpreter genuinely pure and testable in isolation?
-- Do existing handler tests still pass unchanged?
-- Is the context now meaningfully thinner/clearer?
+- Does the extracted policy preserve existing redirect behavior?
+- Is the function framework-free and easy to test in isolation?
+- Did the route loader get simpler rather than just moving complexity around?
+- Are admin-only, billing, hidden section, and ACP scenarios still covered?
 
-**Evaluate:** Run the targeted Vitest suite plus the new interpreter tests under the repo's required Node version, and confirm no behavioral diff.
+**Evaluate:** run focused tests for the policy and confirm the route behavior remains unchanged.
 
 ---
 
 ## Testing Strategy
 
 ### Unit Tests
-- [ ] Interpreter returns the correct interpreted action for each incoming event type.
-- [ ] Interpreter handles malformed/unknown events safely (matches current behavior).
-- [ ] Interpreter is exercised directly, without standing up the full context.
+
+- [ ] `decideSettingsAccess(...)` returns render or redirect correctly for normal settings routes
+- [ ] SaaS-only paths redirect correctly
+- [ ] hidden settings sections redirect correctly based on feature flags
+- [ ] ACP gating behavior is preserved
+- [ ] billing visibility and admin-only page behavior are preserved
 
 ### Integration Tests
-- [ ] Existing `conversation-websocket-handler.test.tsx` suite passes unchanged after the context delegates to the interpreter.
-- [ ] End-to-end event flow through the context produces identical state updates to pre-refactor `main`.
+
+- [ ] Route loader still behaves correctly after delegating to the policy
+- [ ] Existing settings navigation behavior remains unchanged from the user perspective
 
 ### Manual Testing
-Open a conversation, exercise the normal event flow, and confirm the UI behaves identically to `main`.
+
+Navigate through settings routes with different organization or permission states and confirm the UI lands on the expected page.
 
 ---
 
 ## Acceptance Criteria — what "fixed" looks like (concrete)
 
-1. A new, pure event-interpreter module exists and is imported by `conversation-websocket-context.tsx`.
-2. Interpretation logic no longer lives inline in the context.
-3. The interpreter has its own passing unit tests that do **not** require the full context.
-4. The existing handler test suite passes **unchanged**.
-5. **Zero user-visible behavior change** — verified by diffing event-driven state updates against `main`.
-6. Module shape/naming confirmed with a maintainer first (satisfies the `Needs Design` label).
+1. A pure settings access policy module exists and is used by the settings route.
+2. Redirect decisions are no longer expressed inline inside the main route loader flow.
+3. Query-cache and store reads remain at the route edge rather than inside the policy.
+4. Unit tests cover the redirect matrix without needing full route-loader setup.
+5. User-visible settings behavior stays the same after the refactor.
 
 ---
 
 ## Implementation Notes
 
 ### Week 1 Progress
-- Verified `#15061` is open, unassigned, has no linked PR, and no competing claim comment (clean, uncontested target).
-- Read `conversation-websocket-context.tsx` on current `main` and confirmed the interpretation/lifecycle coupling the issue describes.
-- Posted a public interest comment introducing myself on the issue.
-- Forked `OpenHands/OpenHands` and updated the course issue sheet.
+
+- Verified that `#15064` is open
+- Verified that no one is currently assigned
+- Verified that the issue shows no linked pull request
+- Reviewed the relevant frontend settings-route files
+- Confirmed the project is active and has usable setup docs
+- Prepared my Phase I issue claim and completed this README
 
 ### Selection Quality Assessment
-Unlike a contested issue, this one has **no existing PR and no assignee**, so it satisfies the "live, claimable issue" bar cleanly. The only nuance is the `Needs Design` label; I address it head-on by proposing the interpreter interface and confirming it with a maintainer before implementing, which turns the design step into part of the plan rather than a risk.
+
+This issue is cleaner than my earlier contested target because it is still open, unassigned, and not already tied to a PR. It is also specific enough to understand in Phase I without being so broad that the work becomes vague or unbounded.
 
 ### Code Changes
-- **Files modified:** README only during Phase I.
-- **Key commits:** added after design sign-off in Phase II/III.
-- **Approach decisions:** scope deliberately narrow — one clean extraction, behavior-preserving, test-backed.
+
+- **Files modified:** README only during Phase I
+- **Key commits:** to be added in later phases
+- **Approach decisions:** keep the scope narrow, preserve behavior, and optimize for a pure testable policy extraction
 
 ---
 
 ## Pull Request
 
 **PR Link:** To be added in Phase IV.
-**PR Description (planned):** Extract the conversation WebSocket event-interpretation logic from `conversation-websocket-context.tsx` into a dedicated pure module with its own unit tests, preserving behavior and keeping the existing handler suite green.
-**Maintainer Feedback:** none yet — will record the design-confirmation exchange here.
-**Status:** Phase I complete, awaiting maintainer design sign-off before implementation.
+
+**PR Description (planned):** Extract settings route access and redirect decisions into a pure settings access policy, keep fact gathering at the route edge, and add focused unit tests for the redirect matrix.
+
+**Maintainer Feedback:** none yet — I will record any design clarification here if maintainers respond.
+
+**Status:** Phase I complete, ready for Phase II investigation and design confirmation.
 
 ---
 
 ## Learnings & Reflections
 
 ### Technical Skills Gained
-Deeper practice reading a large React/TypeScript codebase to find a clean refactor seam, and reasoning about how to make coupled logic independently testable without changing behavior.
+
+This issue already pushed me to think more carefully about the difference between helper extraction and true policy extraction. I also got more practice reading route-loader logic and identifying where framework concerns should stop and business rules should begin.
 
 ### Challenges Overcome
-The main Phase I challenge was choosing a target that is both a strong skill match **and** genuinely claimable. I explicitly checked open/unassigned/no-linked-PR/no-claim-comment before committing, and I planned around the `Needs Design` label instead of ignoring it.
+
+The biggest challenge was making sure I picked a truly claimable issue rather than one that looked good at first glance but had already become contested or assigned. I also had to separate what the issue says at a high level from what the current code actually does.
 
 ### What I'd Do Differently Next Time
-Nothing changed about my process — I now verify all four claimability conditions up front, which is exactly what I did here.
+
+I would keep verifying claimability as close to submission time as possible, not just at initial selection time, because issue state can change quickly.
 
 ---
 
 ## Resources Used
+
 - [CodePath AI301 Phase I instructions](https://courses.codepath.org/courses/ai301/unit/1#!projects)
-- [OpenHands issue #15061](https://github.com/OpenHands/OpenHands/issues/15061)
+- [OpenHands issue #15064](https://github.com/OpenHands/OpenHands/issues/15064)
 - [OpenHands contributing guide](https://github.com/OpenHands/OpenHands/blob/main/CONTRIBUTING.md)
-- [conversation-websocket-context.tsx](https://github.com/OpenHands/OpenHands/blob/main/frontend/src/contexts/conversation-websocket-context.tsx)
-- [conversation-websocket-handler.test.tsx](https://github.com/OpenHands/OpenHands/blob/main/frontend/__tests__/conversation-websocket-handler.test.tsx)
+- [OpenHands settings route file](https://github.com/OpenHands/OpenHands/blob/main/frontend/src/routes/settings.tsx)
